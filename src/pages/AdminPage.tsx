@@ -1023,7 +1023,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ setActivePage }) => {
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                       : 'bg-amber-50 text-amber-700 border-amber-200'
                   }`}>
-                    {isSupabaseConfigured() ? 'Supabase Connected' : 'Local Archive'}
+                    {isSupabaseConfigured() ? 'Cloud Registry Active' : 'Local Archive'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 max-w-xl">
@@ -1038,13 +1038,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ setActivePage }) => {
                       setIsSyncingCerts(true);
                       await syncCertificatesFromSupabase();
                       setIsSyncingCerts(false);
-                      showToast('Certificates synced with Supabase!');
+                      showToast('Certificates synced with Cloud Central Registry!');
                     }}
                     disabled={isSyncingCerts}
                     className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center space-x-1.5 border border-slate-300 transition-all"
                   >
                     {isSyncingCerts ? <Loader2 className="w-4 h-4 animate-spin text-blue-600" /> : <RefreshCw className="w-4 h-4 text-indigo-600" />}
-                    <span>Sync from Supabase</span>
+                    <span>Sync Cloud Records</span>
                   </button>
                 )}
 
@@ -2261,7 +2261,7 @@ const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
           <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100 text-xs text-indigo-900 flex items-center space-x-2">
             <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
             <span>
-              Certificates saved here are synchronized with Supabase and local storage so students can enter <strong>{studentId || 'UTCP-2025-XXX'}</strong> on the Verify Certificate page to download their authentic verification badge.
+              Certificates saved here are synchronized with central institute storage so students can enter <strong>{studentId || 'UTCP-2025-XXX'}</strong> on the Verify Certificate page to download their authentic verification badge.
             </span>
           </div>
 
