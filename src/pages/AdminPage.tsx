@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
-import { CourseItem, GalleryVideo, GalleryPhoto, Testimonial, CourseCategory, PageType } from '../types';
+import { CourseItem, GalleryVideo, GalleryPhoto, Testimonial, CourseCategory, PageType, CertificateRecord } from '../types';
+import { isSupabaseConfigured } from '../lib/supabase';
 import { 
   Lock, KeyRound, LogOut, Plus, Edit2, Trash2, CheckCircle2, 
   AlertCircle, Eye, RefreshCw, Download, Upload, ShieldCheck, 
   BookOpen, Video, Image as ImageIcon, MessageSquare, Bell, 
   UserCheck, ArrowLeft, Search, Filter, Sparkles, ExternalLink,
-  Phone, Mail, MapPin, Calendar, Check, X
+  Phone, Mail, MapPin, Calendar, Check, X, Award, Database, Loader2, FileCheck, Server
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -20,6 +21,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ setActivePage }) => {
     videos,
     photos,
     testimonials,
+    certificates,
     noticeText,
     enrollments,
     isAdminLoggedIn,
@@ -37,6 +39,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ setActivePage }) => {
     addTestimonial,
     updateTestimonial,
     deleteTestimonial,
+    addCertificate,
+    updateCertificate,
+    deleteCertificate,
+    syncCertificatesFromSupabase,
     updateNoticeText,
     updateEnrollmentStatus,
     deleteEnrollment,
@@ -51,11 +57,16 @@ export const AdminPage: React.FC<AdminPageProps> = ({ setActivePage }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<'courses' | 'videos' | 'photos' | 'reviews' | 'inquiries' | 'notice'>('courses');
+  const [activeTab, setActiveTab] = useState<'courses' | 'videos' | 'photos' | 'reviews' | 'inquiries' | 'notice' | 'certificates'>('courses');
 
   // Filter & Search
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  // Certificate search & filter
+  const [certSearch, setCertSearch] = useState('');
+  const [certCampus, setCertCampus] = useState<'all' | 'Rishra' | 'Konnagar'>('all');
+  const [isSyncingCerts, setIsSyncingCerts] = useState(false);
 
   // Modals state
   const [editingCourse, setEditingCourse] = useState<CourseItem | null>(null);
@@ -69,6 +80,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ setActivePage }) => {
 
   const [editingReview, setEditingReview] = useState<Testimonial | null>(null);
   const [isAddingReview, setIsAddingReview] = useState(false);
+
+  const [editingCertificate, setEditingCertificate] = useState<CertificateRecord | null>(null);
+  const [isAddingCertificate, setIsAddingCertificate] = useState(false);
 
   const [noticeInput, setNoticeInput] = useState(noticeText);
   const [noticeSaved, setNoticeSaved] = useState(false);
@@ -313,7 +327,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ setActivePage }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
         {/* Quick Metrics Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <div 
             onClick={() => setActiveTab('courses')}
             className={`p-5 rounded-2xl border transition-all cursor-pointer ${
@@ -326,6 +340,20 @@ export const AdminPage: React.FC<AdminPageProps> = ({ setActivePage }) => {
             </div>
             <div className="text-2xl font-black text-slate-900">{courses.length}</div>
             <div className="text-[11px] text-slate-500 mt-1">Active Curriculums</div>
+          </div>
+
+          <div 
+            onClick={() => setActiveTab('certificates')}
+            className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+              activeTab === 'certificates' ? 'bg-white border-blue-600 shadow-md ring-2 ring-blue-600/20' : 'bg-white border-slate-200 hover:border-slate-300'
+            }`}
+          >
+            <div className="flex items-center justify-between text-slate-500 mb-2">
+              <span className="text-xs font-bold uppercase tracking-wider">Certificates</span>
+              <Award className="w-4 h-4 text-indigo-600" />
+            </div>
+            <div className="text-2xl font-black text-slate-900">{certificates.length}</div>
+            <div className="text-[11px] text-slate-500 mt-1">Verified Records</div>
           </div>
 
           <div 
@@ -372,7 +400,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ setActivePage }) => {
 
           <div 
             onClick={() => setActiveTab('inquiries')}
-            className={`p-5 rounded-2xl border transition-all cursor-pointer col-span-2 sm:col-span-1 ${
+            className={`p-5 rounded-2xl border transition-all cursor-pointer ${
               activeTab === 'inquiries' ? 'bg-white border-blue-600 shadow-md ring-2 ring-blue-600/20' : 'bg-white border-slate-200 hover:border-slate-300'
             }`}
           >
@@ -404,6 +432,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ setActivePage }) => {
           >
             <BookOpen className="w-4 h-4" />
             <span>Manage Courses ({courses.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('certificates')}
+            className={`px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center space-x-2 transition-all shrink-0 ${
+              activeTab === 'certificates'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-white text-slate-600 hover:bg-slate-200/70 border border-slate-200'
+            }`}
+          >
+            <Award className="w-4 h-4 text-indigo-400" />
+            <span>Student Certificates ({certificates.length})</span>
           </button>
 
           <button
@@ -948,6 +988,189 @@ export const AdminPage: React.FC<AdminPageProps> = ({ setActivePage }) => {
           </div>
         )}
 
+        {/* TAB 7: CERTIFICATES MANAGER (SUPABASE CONNECTED) */}
+        {activeTab === 'certificates' && (
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-xs">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <h2 className="text-xl font-black text-slate-900">Student Certificates Database</h2>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                    isSupabaseConfigured()
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    {isSupabaseConfigured() ? 'Supabase Connected' : 'Local Archive'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 max-w-xl">
+                  Upload, update, or remove student certificate records. Certificates uploaded here can be instantly verified by students and employers on the <strong className="text-slate-700">/verify</strong> page.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {isSupabaseConfigured() && (
+                  <button
+                    onClick={async () => {
+                      setIsSyncingCerts(true);
+                      await syncCertificatesFromSupabase();
+                      setIsSyncingCerts(false);
+                      showToast('Certificates synced with Supabase!');
+                    }}
+                    disabled={isSyncingCerts}
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center space-x-1.5 border border-slate-300 transition-all"
+                  >
+                    {isSyncingCerts ? <Loader2 className="w-4 h-4 animate-spin text-blue-600" /> : <RefreshCw className="w-4 h-4 text-indigo-600" />}
+                    <span>Sync from Supabase</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setIsAddingCertificate(true)}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold uppercase tracking-wider flex items-center space-x-2 shadow-md shadow-indigo-600/20 transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Upload Certificate</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="text"
+                  value={certSearch}
+                  onChange={(e) => setCertSearch(e.target.value)}
+                  placeholder="Search student name, ID (e.g. UTCP-2025-101), Reg No, or Certificate No..."
+                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              <div className="flex items-center space-x-3">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Campus:</span>
+                <select
+                  value={certCampus}
+                  onChange={(e) => setCertCampus(e.target.value as any)}
+                  className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none"
+                >
+                  <option value="all">All Campuses</option>
+                  <option value="Rishra">Rishra</option>
+                  <option value="Konnagar">Konnagar</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Certificates List Table */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase tracking-wider text-slate-500">
+                      <th className="py-3.5 px-4">Student Details</th>
+                      <th className="py-3.5 px-4">IDs & Certificates</th>
+                      <th className="py-3.5 px-4">Course & Campus</th>
+                      <th className="py-3.5 px-4">Grade / %</th>
+                      <th className="py-3.5 px-4">Issue Date</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+                    {certificates
+                      .filter(c => {
+                        const q = certSearch.toLowerCase().trim();
+                        const matchQ = !q || 
+                          c.studentName.toLowerCase().includes(q) ||
+                          c.studentId.toLowerCase().includes(q) ||
+                          c.certificateNo.toLowerCase().includes(q) ||
+                          c.regNo.toLowerCase().includes(q) ||
+                          c.courseName.toLowerCase().includes(q);
+                        const matchCampus = certCampus === 'all' || c.campus === certCampus;
+                        return matchQ && matchCampus;
+                      })
+                      .map((cert) => (
+                        <tr key={cert.id || cert.studentId} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center shrink-0 border border-indigo-200 text-xs">
+                                {cert.studentName.charAt(0)}
+                              </div>
+                              <div>
+                                <div className="font-bold text-slate-900">{cert.studentName}</div>
+                                <div className="text-[10px] text-emerald-600 font-semibold">{cert.status}</div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4 font-mono text-[11px]">
+                            <div className="font-bold text-slate-900">{cert.studentId}</div>
+                            <div className="text-[10px] text-slate-500">Cert: {cert.certificateNo}</div>
+                            <div className="text-[10px] text-slate-400">Reg: {cert.regNo}</div>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <div className="font-semibold text-slate-900">{cert.courseName}</div>
+                            <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
+                              {cert.campus} Campus
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <div className="font-bold text-indigo-600">{cert.grade}</div>
+                            <div className="text-[10px] text-slate-500 font-medium">{cert.percentage}</div>
+                          </td>
+
+                          <td className="py-3.5 px-4 text-slate-500">
+                            <div>{cert.issueDate}</div>
+                            <div className="text-[10px] text-slate-400">Session: {cert.completionYear}</div>
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => {
+                                  setActivePage('verify');
+                                  showToast(`Testing verification for ${cert.studentId}`);
+                                }}
+                                className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                                title="Test Verification"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </button>
+
+                              <button
+                                onClick={() => setEditingCertificate(cert)}
+                                className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+                                title="Edit Certificate"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+
+                              <button
+                                onClick={async () => {
+                                  if (window.confirm(`Delete certificate record for ${cert.studentName} (${cert.studentId})?`)) {
+                                    const res = await deleteCertificate(cert.id || cert.studentId);
+                                    if (res.error) showToast(res.error);
+                                    else showToast('Certificate deleted.');
+                                  }
+                                }}
+                                className="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+                                title="Delete Record"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* MODAL: ADD / EDIT COURSE */}
@@ -1034,6 +1257,31 @@ export const AdminPage: React.FC<AdminPageProps> = ({ setActivePage }) => {
             }
             setIsAddingReview(false);
             setEditingReview(null);
+          }}
+        />
+      )}
+
+      {/* MODAL: ADD / EDIT CERTIFICATE */}
+      {(isAddingCertificate || editingCertificate) && (
+        <CertificateFormModal
+          certificate={editingCertificate}
+          coursesList={courses}
+          onClose={() => {
+            setIsAddingCertificate(false);
+            setEditingCertificate(null);
+          }}
+          onSave={async (data) => {
+            if (editingCertificate) {
+              const res = await updateCertificate(editingCertificate.id || editingCertificate.studentId, data);
+              if (res.error) showToast(res.error);
+              else showToast('Certificate updated & saved!');
+            } else {
+              const res = await addCertificate(data);
+              if (res.error) showToast(res.error);
+              else showToast('New student certificate uploaded!');
+            }
+            setIsAddingCertificate(false);
+            setEditingCertificate(null);
           }}
         />
       )}
@@ -1729,6 +1977,284 @@ const ReviewFormModal: React.FC<ReviewFormModalProps> = ({ review, onClose, onSa
               className="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold uppercase hover:bg-blue-700"
             >
               Save Review
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// SUB-MODAL: CERTIFICATE FORM
+// ==========================================
+interface CertificateFormModalProps {
+  certificate: CertificateRecord | null;
+  coursesList: CourseItem[];
+  onClose: () => void;
+  onSave: (data: Omit<CertificateRecord, 'id'>) => void;
+}
+
+const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
+  certificate,
+  coursesList,
+  onClose,
+  onSave
+}) => {
+  const [studentId, setStudentId] = useState(
+    certificate?.studentId || `UTCP-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 899)}`
+  );
+  const [studentName, setStudentName] = useState(certificate?.studentName || '');
+  const [courseName, setCourseName] = useState(
+    certificate?.courseName || (coursesList[0]?.name || 'Python 3 Masterclass')
+  );
+  const [campus, setCampus] = useState<'Rishra' | 'Konnagar'>(certificate?.campus || 'Rishra');
+  const [issueDate, setIssueDate] = useState(
+    certificate?.issueDate || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  );
+  const [completionYear, setCompletionYear] = useState(certificate?.completionYear || `${new Date().getFullYear() - 1}-${new Date().getFullYear()}`);
+  const [grade, setGrade] = useState(certificate?.grade || 'A+ (Excellence)');
+  const [percentage, setPercentage] = useState(certificate?.percentage || '92.5%');
+  const [status, setStatus] = useState(certificate?.status || 'Verified & Authentic');
+  const [certificateNo, setCertificateNo] = useState(
+    certificate?.certificateNo || `UTCP/CERT/${new Date().getFullYear()}/${Math.floor(1000 + Math.random() * 8999)}`
+  );
+  const [regNo, setRegNo] = useState(
+    certificate?.regNo || `REG-${new Date().getFullYear()}-RIS-${Math.floor(100 + Math.random() * 899)}`
+  );
+  const [skillsText, setSkillsText] = useState(
+    certificate?.skillsAcquired?.join(', ') || 'Practical Labs Completed, Viva Cleared, Project Assessment Verified'
+  );
+  const [avatarUrl, setAvatarUrl] = useState(certificate?.avatarUrl || '');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({
+      studentId: studentId.trim(),
+      studentName: studentName.trim(),
+      courseName: courseName.trim(),
+      campus,
+      issueDate: issueDate.trim(),
+      completionYear: completionYear.trim(),
+      grade: grade.trim(),
+      percentage: percentage.trim(),
+      status: status.trim(),
+      certificateNo: certificateNo.trim(),
+      regNo: regNo.trim(),
+      skillsAcquired: skillsText.split(',').map(s => s.trim()).filter(Boolean),
+      avatarUrl: avatarUrl.trim() || undefined
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white text-slate-900 rounded-3xl p-6 sm:p-8 max-w-2xl w-full space-y-6 shadow-2xl my-8">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="flex items-center space-x-2">
+            <Award className="w-5 h-5 text-indigo-600" />
+            <h3 className="text-lg font-bold text-slate-900">
+              {certificate ? 'Edit Student Certificate Record' : 'Upload New Student Certificate'}
+            </h3>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
+                Student ID / Roll No <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
+                placeholder="e.g. UTCP-2025-101"
+                className="w-full p-3 rounded-xl border border-slate-300 text-xs font-mono font-bold text-indigo-700"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
+                Student Full Name <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={studentName}
+                onChange={(e) => setStudentName(e.target.value)}
+                placeholder="e.g. Rohan Sharma"
+                className="w-full p-3 rounded-xl border border-slate-300 text-xs font-semibold"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
+                Course Completed <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={courseName}
+                onChange={(e) => setCourseName(e.target.value)}
+                placeholder="e.g. Python 3 Masterclass"
+                list="course-suggestions"
+                className="w-full p-3 rounded-xl border border-slate-300 text-xs"
+              />
+              <datalist id="course-suggestions">
+                {coursesList.map(c => (
+                  <option key={c.id} value={c.name} />
+                ))}
+              </datalist>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Campus Location</label>
+              <select
+                value={campus}
+                onChange={(e) => setCampus(e.target.value as any)}
+                className="w-full p-3 rounded-xl border border-slate-300 text-xs font-semibold"
+              >
+                <option value="Rishra">Rishra Campus</option>
+                <option value="Konnagar">Konnagar Campus</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Registration No</label>
+              <input
+                type="text"
+                value={regNo}
+                onChange={(e) => setRegNo(e.target.value)}
+                placeholder="e.g. REG-2025-RIS-0101"
+                className="w-full p-3 rounded-xl border border-slate-300 text-xs font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Certificate Number</label>
+              <input
+                type="text"
+                value={certificateNo}
+                onChange={(e) => setCertificateNo(e.target.value)}
+                placeholder="e.g. UTCP/CERT/2025/0101"
+                className="w-full p-3 rounded-xl border border-slate-300 text-xs font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Issue Date</label>
+              <input
+                type="text"
+                value={issueDate}
+                onChange={(e) => setIssueDate(e.target.value)}
+                placeholder="e.g. 15-Jan-2025"
+                className="w-full p-3 rounded-xl border border-slate-300 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Academic Session</label>
+              <input
+                type="text"
+                value={completionYear}
+                onChange={(e) => setCompletionYear(e.target.value)}
+                placeholder="e.g. 2024-2025"
+                className="w-full p-3 rounded-xl border border-slate-300 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Percentage / Marks</label>
+              <input
+                type="text"
+                value={percentage}
+                onChange={(e) => setPercentage(e.target.value)}
+                placeholder="e.g. 92.5%"
+                className="w-full p-3 rounded-xl border border-slate-300 text-xs"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Grade Awarded</label>
+              <input
+                type="text"
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                placeholder="e.g. A+ (Excellence)"
+                className="w-full p-3 rounded-xl border border-slate-300 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-700 mb-1">Verification Status</label>
+              <input
+                type="text"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                placeholder="Verified & Authentic"
+                className="w-full p-3 rounded-xl border border-slate-300 text-xs text-emerald-700 font-semibold"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
+              Skills / Modules Certified (Comma Separated)
+            </label>
+            <input
+              type="text"
+              value={skillsText}
+              onChange={(e) => setSkillsText(e.target.value)}
+              placeholder="e.g. Python 3, Object-Oriented Programming, SQLite, Automation"
+              className="w-full p-3 rounded-xl border border-slate-300 text-xs"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
+              Student Photo URL (Optional)
+            </label>
+            <input
+              type="url"
+              value={avatarUrl}
+              onChange={(e) => setAvatarUrl(e.target.value)}
+              placeholder="https://images.unsplash.com/photo-..."
+              className="w-full p-3 rounded-xl border border-slate-300 text-xs font-mono"
+            />
+          </div>
+
+          <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100 text-xs text-indigo-900 flex items-center space-x-2">
+            <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
+            <span>
+              Certificates saved here are synchronized with Supabase and local storage so students can enter <strong>{studentId || 'UTCP-2025-XXX'}</strong> on the Verify Certificate page to download their authentic verification badge.
+            </span>
+          </div>
+
+          <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold uppercase hover:bg-indigo-700 shadow-md shadow-indigo-600/20"
+            >
+              Save & Publish Certificate
             </button>
           </div>
         </form>

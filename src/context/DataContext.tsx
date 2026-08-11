@@ -1,13 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CourseItem, GalleryVideo, GalleryPhoto, Testimonial, EnrollmentFormData } from '../types';
+import { CourseItem, GalleryVideo, GalleryPhoto, Testimonial, EnrollmentFormData, CertificateRecord } from '../types';
 import { ALL_COURSES } from '../data/coursesData';
 import { GALLERY_VIDEOS, GALLERY_PHOTOS, STUDENT_CAROUSEL_REVIEWS } from '../data/instituteData';
+import { SAMPLE_CERTIFICATES } from '../data/certificatesData';
+import { upsertCertificateToSupabase, deleteCertificateFromSupabase, fetchAllCertificatesFromSupabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface DataContextType {
   courses: CourseItem[];
   videos: GalleryVideo[];
   photos: GalleryPhoto[];
   testimonials: Testimonial[];
+  certificates: CertificateRecord[];
   noticeText: string;
   enrollments: EnrollmentFormData[];
   isAdminLoggedIn: boolean;
@@ -36,6 +39,12 @@ interface DataContextType {
   updateTestimonial: (id: string, testimonial: Partial<Testimonial>) => void;
   deleteTestimonial: (id: string) => void;
 
+  // Certificate CRUD & Supabase Sync
+  addCertificate: (cert: Omit<CertificateRecord, 'id'>) => Promise<{ success: boolean; error?: string }>;
+  updateCertificate: (id: string, cert: Partial<CertificateRecord>) => Promise<{ success: boolean; error?: string }>;
+  deleteCertificate: (id: string) => Promise<{ success: boolean; error?: string }>;
+  syncCertificatesFromSupabase: () => Promise<void>;
+
   // Notice Bar
   updateNoticeText: (text: string) => void;
 
@@ -57,6 +66,7 @@ const STORAGE_KEYS = {
   VIDEOS: 'utcp_videos_v1',
   PHOTOS: 'utcp_photos_v1',
   TESTIMONIALS: 'utcp_testimonials_v1',
+  CERTIFICATES: 'utcp_certificates_v1',
   NOTICE: 'utcp_notice_v1',
   ENROLLMENTS: 'utcp_enrollments_v1',
   ADMIN_AUTH: 'utcp_admin_auth_v1',
@@ -98,6 +108,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return saved ? JSON.parse(saved) : STUDENT_CAROUSEL_REVIEWS;
     } catch {
       return STUDENT_CAROUSEL_REVIEWS;
+    }
+  });
+
+  const [certificates, setCertificates] = useState<CertificateRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.CERTIFICATES);
+      return saved ? JSON.parse(saved) : SAMPLE_CERTIFICATES;
+    } catch {
+      return SAMPLE_CERTIFICATES;
     }
   });
 
@@ -168,6 +187,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(testimonials));
   }, [testimonials]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.CERTIFICATES, JSON.stringify(certificates));
+  }, [certificates]);
+
+  // Initial load from Supabase if configured
+  useEffect(() => {
+    if (isSupabaseConfigured()) {
+      fetchAllCertificatesFromSupabase().then(dbCerts => {
+        if (dbCerts && dbCerts.length > 0) {
+          setCertificates(prev => {
+            // Merge Supabase certificates with local
+            const map = new Map<string, CertificateRecord>();
+            prev.forEach(c => map.set(c.studentId, c));
+            dbCerts.forEach(c => map.set(c.studentId, c));
+            return Array.from(map.values());
+          });
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.NOTICE, noticeText);
@@ -264,6 +304,66 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTestimonials(prev => prev.filter(t => t.id !== id));
   };
 
+  // Certificate actions & Supabase syncing
+  const addCertificate = async (cert: Omit<CertificateRecord, 'id'>): Promise<{ success: boolean; error?: string }> => {
+    const newCert: CertificateRecord = {
+      ...cert,
+      id: 'cert-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6)
+    };
+
+    setCertificates(prev => [newCert, ...prev]);
+
+    if (isSupabaseConfigured()) {
+      const res = await upsertCertificateToSupabase(newCert);
+      if (!res.success) {
+        console.warn('Supabase certificate upload warning:', res.error);
+        return { success: true, error: `Saved locally, but Supabase sync notice: ${res.error}` };
+      }
+    }
+    return { success: true };
+  };
+
+  const updateCertificate = async (id: string, updated: Partial<CertificateRecord>): Promise<{ success: boolean; error?: string }> => {
+    let targetCert: CertificateRecord | null = null;
+    setCertificates(prev => prev.map(c => {
+      if (c.id === id || c.studentId === id) {
+        targetCert = { ...c, ...updated };
+        return targetCert;
+      }
+      return c;
+    }));
+
+    if (targetCert && isSupabaseConfigured()) {
+      const res = await upsertCertificateToSupabase(targetCert);
+      if (!res.success) {
+        return { success: true, error: `Saved locally, but Supabase sync notice: ${res.error}` };
+      }
+    }
+    return { success: true };
+  };
+
+  const deleteCertificate = async (id: string): Promise<{ success: boolean; error?: string }> => {
+    const target = certificates.find(c => c.id === id || c.studentId === id);
+    setCertificates(prev => prev.filter(c => c.id !== id && c.studentId !== id));
+
+    if (target && isSupabaseConfigured()) {
+      const res = await deleteCertificateFromSupabase(target.studentId);
+      if (!res.success) {
+        return { success: true, error: `Deleted locally, but Supabase notice: ${res.error}` };
+      }
+    }
+    return { success: true };
+  };
+
+  const syncCertificatesFromSupabase = async (): Promise<void> => {
+    if (isSupabaseConfigured()) {
+      const dbCerts = await fetchAllCertificatesFromSupabase();
+      if (dbCerts && dbCerts.length > 0) {
+        setCertificates(dbCerts);
+      }
+    }
+  };
+
   // Notice Bar
   const updateNoticeText = (text: string) => {
     setNoticeText(text);
@@ -297,11 +397,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setVideos(GALLERY_VIDEOS);
     setPhotos(GALLERY_PHOTOS);
     setTestimonials(STUDENT_CAROUSEL_REVIEWS);
+    setCertificates(SAMPLE_CERTIFICATES);
     setNoticeText(DEFAULT_NOTICE);
     localStorage.removeItem(STORAGE_KEYS.COURSES);
     localStorage.removeItem(STORAGE_KEYS.VIDEOS);
     localStorage.removeItem(STORAGE_KEYS.PHOTOS);
     localStorage.removeItem(STORAGE_KEYS.TESTIMONIALS);
+    localStorage.removeItem(STORAGE_KEYS.CERTIFICATES);
     localStorage.removeItem(STORAGE_KEYS.NOTICE);
   };
 
@@ -312,6 +414,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       videos,
       photos,
       testimonials,
+      certificates,
       noticeText,
       enrollments,
       exportedAt: new Date().toISOString()
@@ -326,6 +429,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (parsed.videos) setVideos(parsed.videos);
       if (parsed.photos) setPhotos(parsed.photos);
       if (parsed.testimonials) setTestimonials(parsed.testimonials);
+      if (parsed.certificates) setCertificates(parsed.certificates);
       if (parsed.noticeText) setNoticeText(parsed.noticeText);
       if (parsed.enrollments) setEnrollments(parsed.enrollments);
       return true;
@@ -342,6 +446,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         videos,
         photos,
         testimonials,
+        certificates,
         noticeText,
         enrollments,
         isAdminLoggedIn,
@@ -359,6 +464,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addTestimonial,
         updateTestimonial,
         deleteTestimonial,
+        addCertificate,
+        updateCertificate,
+        deleteCertificate,
+        syncCertificatesFromSupabase,
         updateNoticeText,
         addEnrollment,
         updateEnrollmentStatus,
