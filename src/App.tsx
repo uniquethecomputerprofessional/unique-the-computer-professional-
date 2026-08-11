@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PageType, GalleryVideo } from './types';
-import { GALLERY_VIDEOS } from './data/instituteData';
+import { DataProvider, useData } from './context/DataContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { EnrollModal } from './components/EnrollModal';
@@ -13,11 +13,13 @@ import { GalleryPage } from './pages/GalleryPage';
 import { VerifyPage } from './pages/VerifyPage';
 import { AboutPage } from './pages/AboutPage';
 import { VisitPage } from './pages/VisitPage';
+import { AdminPage } from './pages/AdminPage';
 
-import { Phone, MessageSquare, Sparkles, ArrowUp } from 'lucide-react';
+import { Phone, Sparkles, ArrowUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-export default function App() {
+function MainAppContent() {
+  const { videos } = useData();
   const [activePage, setActivePage] = useState<PageType>('home');
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
   const [selectedCourseForEnroll, setSelectedCourseForEnroll] = useState<string | undefined>();
@@ -39,8 +41,10 @@ export default function App() {
   };
 
   const handleOpenVideoModal = (videoId: string) => {
-    const video = GALLERY_VIDEOS.find(v => v.id === videoId) || GALLERY_VIDEOS[0];
-    setSelectedVideo(video);
+    const video = videos.find(v => v.id === videoId) || videos[0];
+    if (video) {
+      setSelectedVideo(video);
+    }
   };
 
   const scrollToTop = () => {
@@ -103,6 +107,12 @@ export default function App() {
             {activePage === 'visit' && (
               <VisitPage />
             )}
+
+            {activePage === 'admin' && (
+              <AdminPage
+                setActivePage={setActivePage}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -113,7 +123,7 @@ export default function App() {
         onOpenEnrollModal={handleOpenEnrollModal}
       />
 
-      {/* Floating Call & Enroll Actions (Mobile & Desktop) */}
+      {/* Floating Call & Enroll Actions */}
       <div className="fixed bottom-6 right-6 z-30 flex flex-col items-end space-y-3 pointer-events-none">
         
         {/* Scroll To Top Button */}
@@ -166,5 +176,13 @@ export default function App() {
       />
 
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <DataProvider>
+      <MainAppContent />
+    </DataProvider>
   );
 }

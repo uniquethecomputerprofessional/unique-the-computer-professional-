@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GalleryVideo, GalleryPhoto, Testimonial } from '../types';
-import { GALLERY_VIDEOS, GALLERY_PHOTOS, STUDENT_CAROUSEL_REVIEWS } from '../data/instituteData';
+import { useData } from '../context/DataContext';
 import { TiltCard } from '../components/TiltCard';
 import { 
   Play, Video, Image as ImageIcon, Sparkles, X, ChevronRight, 
@@ -17,12 +17,13 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
   onOpenVideoModal,
   onOpenEnrollModal
 }) => {
+  const { videos, photos, testimonials } = useData();
   const [activePhotoCategory, setActivePhotoCategory] = useState<string>('All');
   const [lightboxPhoto, setLightboxPhoto] = useState<GalleryPhoto | null>(null);
 
   const categories = ['All', 'Practical Labs', 'Classrooms', 'Certificates', 'Student Life'];
 
-  const filteredPhotos = GALLERY_PHOTOS.filter(photo => 
+  const filteredPhotos = photos.filter(photo => 
     activePhotoCategory === 'All' || photo.category === activePhotoCategory
   );
 
@@ -58,7 +59,7 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {GALLERY_VIDEOS.map((video) => (
+          {videos.map((video) => (
             <TiltCard key={video.id}>
               <div 
                 onClick={() => onOpenVideoModal(video.id)}
@@ -125,7 +126,7 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({
 
         {/* Carousel Container */}
         <div className="flex space-x-6 overflow-x-auto pb-4 no-scrollbar pt-2">
-          {STUDENT_CAROUSEL_REVIEWS.map((review) => (
+          {testimonials.map((review) => (
             <div
               key={review.id}
               className="min-w-[280px] sm:min-w-[340px] max-w-[360px] bg-white border border-slate-200 rounded-2xl p-6 flex-shrink-0 flex flex-col justify-between hover:border-blue-300 hover:shadow-sm transition-all"

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { PageType } from '../types';
 import { INSTITUTE_CONTACT } from '../data/instituteData';
+import { useData } from '../context/DataContext';
 import { 
   Menu, X, Phone, GraduationCap, ShieldCheck, MapPin, 
-  BookOpen, Image as ImageIcon, Info, ChevronRight, Sparkles 
+  BookOpen, Image as ImageIcon, Info, ChevronRight, Sparkles, Lock 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -18,6 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActivePage,
   onOpenEnrollModal
 }) => {
+  const { noticeText, isAdminLoggedIn } = useData();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -36,6 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'verify', label: 'Verify', icon: <ShieldCheck className="w-4 h-4" /> },
     { id: 'about', label: 'About Us', icon: <Info className="w-4 h-4" /> },
     { id: 'visit', label: 'Visit Us', icon: <MapPin className="w-4 h-4" /> },
+    { id: 'admin', label: 'Admin', icon: <Lock className="w-4 h-4 text-amber-500" /> },
   ];
 
   const handleNavClick = (pageId: PageType) => {
@@ -54,10 +57,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
             </span>
-            <span>Admissions Open for New Batches at Rishra & Konnagar Campuses</span>
+            <span>{noticeText}</span>
           </div>
 
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-4">
             <a 
               href={`tel:${INSTITUTE_CONTACT.phone}`} 
               className="flex items-center space-x-1.5 text-slate-600 hover:text-blue-600 font-medium transition-colors"
@@ -66,9 +69,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Call: {INSTITUTE_CONTACT.phone}</span>
             </a>
             <span className="hidden md:inline text-slate-300">|</span>
-            <span className="hidden md:inline text-slate-600 font-semibold text-xs">
-              Direct Practical Training & 1-on-1 Guidance
-            </span>
+            <button
+              onClick={() => handleNavClick('admin')}
+              className="text-slate-600 hover:text-blue-600 font-bold text-xs flex items-center space-x-1"
+            >
+              <Lock className="w-3 h-3 text-amber-600" />
+              <span>Admin Portal</span>
+              {isAdminLoggedIn && (
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block ml-1"></span>
+              )}
+            </button>
           </div>
         </div>
       </div>

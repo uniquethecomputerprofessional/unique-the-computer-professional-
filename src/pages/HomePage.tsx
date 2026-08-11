@@ -1,7 +1,7 @@
 import React from 'react';
 import { PageType, CourseItem } from '../types';
-import { ALL_COURSES } from '../data/coursesData';
-import { INSTITUTE_CONTACT, WHY_CHOOSE_US, INSTAGRAM_POSTS, STUDENT_CAROUSEL_REVIEWS } from '../data/instituteData';
+import { useData } from '../context/DataContext';
+import { INSTITUTE_CONTACT, WHY_CHOOSE_US, INSTAGRAM_POSTS } from '../data/instituteData';
 import { TiltCard } from '../components/TiltCard';
 import { 
   Sparkles, GraduationCap, Code, ShieldCheck, MapPin, 
@@ -21,7 +21,8 @@ export const HomePage: React.FC<HomePageProps> = ({
   onOpenEnrollModal,
   onOpenVideoModal
 }) => {
-  const popularCourses = ALL_COURSES.filter(c => c.isPopular).slice(0, 6);
+  const { courses, testimonials } = useData();
+  const popularCourses = courses.filter(c => c.isPopular).slice(0, 6);
 
   return (
     <div className="space-y-24 pb-16">
@@ -403,7 +404,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {STUDENT_CAROUSEL_REVIEWS.slice(0, 2).map((rev) => (
+            {testimonials.slice(0, 2).map((rev) => (
               <div key={rev.id} className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
                 <div className="flex items-center space-x-1 text-amber-500">
                   {[...Array(rev.rating)].map((_, i) => (

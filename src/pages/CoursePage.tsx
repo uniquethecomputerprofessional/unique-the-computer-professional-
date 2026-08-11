@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PageType, CourseCategory, CourseItem } from '../types';
-import { ALL_COURSES, COURSE_CATEGORIES } from '../data/coursesData';
+import { COURSE_CATEGORIES } from '../data/coursesData';
+import { useData } from '../context/DataContext';
 import { TiltCard } from '../components/TiltCard';
 import { 
   Search, BookOpen, GraduationCap, Code, FileSpreadsheet, 
@@ -14,11 +15,12 @@ interface CoursePageProps {
 }
 
 export const CoursePage: React.FC<CoursePageProps> = ({ onOpenEnrollModal }) => {
+  const { courses } = useData();
   const [selectedCategory, setSelectedCategory] = useState<CourseCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSyllabusId, setExpandedSyllabusId] = useState<string | null>(null);
 
-  const filteredCourses = ALL_COURSES.filter(course => {
+  const filteredCourses = courses.filter(course => {
     const matchesCategory = selectedCategory === 'all' || course.category === selectedCategory;
     const matchesSearch = searchQuery === '' || 
       course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -110,7 +112,7 @@ export const CoursePage: React.FC<CoursePageProps> = ({ onOpenEnrollModal }) => 
                   : 'bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200'
               }`}
             >
-              All Courses ({ALL_COURSES.length})
+              All Courses ({courses.length})
             </button>
 
             {COURSE_CATEGORIES.map(cat => (

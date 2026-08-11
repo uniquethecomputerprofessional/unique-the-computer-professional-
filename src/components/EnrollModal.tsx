@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ALL_COURSES } from '../data/coursesData';
 import { CAMPUSES } from '../data/instituteData';
+import { useData } from '../context/DataContext';
 import { EnrollmentFormData } from '../types';
 import { X, CheckCircle2, Sparkles, Send, Phone, MapPin, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -16,12 +16,15 @@ export const EnrollModal: React.FC<EnrollModalProps> = ({
   onClose,
   selectedCourseId
 }) => {
+  const { courses, addEnrollment } = useData();
+  const defaultCourseId = selectedCourseId || (courses.length > 0 ? courses[0].id : '');
+
   const [formData, setFormData] = useState<EnrollmentFormData>({
     studentName: '',
     phone: '',
     email: '',
     campus: 'Rishra',
-    courseId: selectedCourseId || ALL_COURSES[0].id,
+    courseId: defaultCourseId,
     standardOrQualification: 'High School / Class XI-XII',
     message: ''
   });
@@ -31,13 +34,16 @@ export const EnrollModal: React.FC<EnrollModalProps> = ({
   useEffect(() => {
     if (selectedCourseId) {
       setFormData(prev => ({ ...prev, courseId: selectedCourseId }));
+    } else if (courses.length > 0 && !formData.courseId) {
+      setFormData(prev => ({ ...prev, courseId: courses[0].id }));
     }
-  }, [selectedCourseId]);
+  }, [selectedCourseId, courses]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    addEnrollment(formData);
     setIsSubmitted(true);
   };
 
@@ -163,7 +169,7 @@ export const EnrollModal: React.FC<EnrollModalProps> = ({
                     onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
                     className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-colors"
                   >
-                    {ALL_COURSES.map(course => (
+                    {courses.map(course => (
                       <option key={course.id} value={course.id}>
                         {course.name} ({course.categoryLabel})
                       </option>
@@ -224,7 +230,7 @@ export const EnrollModal: React.FC<EnrollModalProps> = ({
                 <div className="flex justify-between">
                   <span>Selected Course:</span>
                   <span className="text-slate-900 font-semibold">
-                    {ALL_COURSES.find(c => c.id === formData.courseId)?.name}
+                    {courses.find(c => c.id === formData.courseId)?.name || 'Computer Training Course'}
                   </span>
                 </div>
                 <div className="flex justify-between">

@@ -1,4 +1,4 @@
-export type PageType = 'home' | 'courses' | 'gallery' | 'verify' | 'about' | 'visit';
+export type PageType = 'home' | 'courses' | 'gallery' | 'verify' | 'about' | 'visit' | 'admin';
 
 export type CourseCategory = 
   | 'school' 
@@ -86,6 +86,7 @@ export interface InstagramPost {
 }
 
 export interface EnrollmentFormData {
+  id?: string;
   studentName: string;
   phone: string;
   email: string;
@@ -94,4 +95,6 @@ export interface EnrollmentFormData {
   standardOrQualification: string;
   message: string;
   preferredTime?: string;
+  submittedAt?: string;
+  status?: 'New' | 'Contacted' | 'Enrolled' | 'Closed';
 }
