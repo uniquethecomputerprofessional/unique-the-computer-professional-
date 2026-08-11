@@ -14,10 +14,12 @@ interface DataContextType {
   noticeText: string;
   enrollments: EnrollmentFormData[];
   isAdminLoggedIn: boolean;
+  adminEmail: string;
 
   // Auth
-  loginAdmin: (password: string) => boolean;
+  loginAdmin: (email: string, password: string) => boolean;
   logoutAdmin: () => void;
+  updateAdminCredentials: (email: string, password: string) => void;
 
   // Course CRUD
   addCourse: (course: Omit<CourseItem, 'id'>) => void;
@@ -70,6 +72,7 @@ const STORAGE_KEYS = {
   NOTICE: 'utcp_notice_v1',
   ENROLLMENTS: 'utcp_enrollments_v1',
   ADMIN_AUTH: 'utcp_admin_auth_v1',
+  ADMIN_CREDS: 'utcp_admin_creds_v1',
 };
 
 const DEFAULT_NOTICE = 'Admissions Open for New Batches at Rishra & Konnagar Campuses';
@@ -163,6 +166,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
+  const DEFAULT_ADMIN_EMAIL = 'uniquethecomputerprofessional@gmail.com';
+  const DEFAULT_ADMIN_PASSWORDS = [
+    ' unique@1998@COMPUTER!',
+    'unique@1998@COMPUTER!',
+    'unique1998',
+    'admin123',
+    'admin@123',
+    'unique@1998'
+  ];
+
+  const [adminCreds, setAdminCreds] = useState<{ email: string; passwordHash?: string }>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.ADMIN_CREDS);
+      return saved ? JSON.parse(saved) : { email: DEFAULT_ADMIN_EMAIL };
+    } catch {
+      return { email: DEFAULT_ADMIN_EMAIL };
+    }
+  });
+
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
     try {
       return localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
@@ -221,11 +243,38 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, isAdminLoggedIn ? 'true' : 'false');
   }, [isAdminLoggedIn]);
 
-  // Auth
-  const loginAdmin = (password: string): boolean => {
-    // Default admin credentials: unique1998, admin123, or unique@1998
-    const validPasswords = ['unique1998', 'admin123', 'unique@1998', 'admin'];
-    if (validPasswords.includes(password.trim().toLowerCase())) {
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.ADMIN_CREDS, JSON.stringify(adminCreds));
+  }, [adminCreds]);
+
+  // Single Admin Auth (Email + Password)
+  const loginAdmin = (inputEmail: string, inputPassword: string): boolean => {
+    const cleanEmail = inputEmail.trim().toLowerCase();
+    const cleanPass = inputPassword.trim();
+
+    // Check against authorized single admin email (or alias)
+    const validEmails = [
+      adminCreds.email.toLowerCase(),
+      DEFAULT_ADMIN_EMAIL.toLowerCase(),
+      'admin@utcp.com',
+      'admin@unique.com',
+      'admin'
+    ];
+
+    const isEmailValid = validEmails.includes(cleanEmail);
+
+    // Check password
+    let isPasswordValid = false;
+    if (adminCreds.passwordHash) {
+      isPasswordValid = inputPassword === adminCreds.passwordHash || cleanPass === adminCreds.passwordHash.trim();
+    } else {
+      isPasswordValid = 
+        DEFAULT_ADMIN_PASSWORDS.includes(inputPassword) ||
+        DEFAULT_ADMIN_PASSWORDS.includes(cleanPass) ||
+        DEFAULT_ADMIN_PASSWORDS.includes(cleanPass.toLowerCase());
+    }
+
+    if (isEmailValid && isPasswordValid) {
       setIsAdminLoggedIn(true);
       return true;
     }
@@ -234,6 +283,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logoutAdmin = () => {
     setIsAdminLoggedIn(false);
+  };
+
+  const updateAdminCredentials = (newEmail: string, newPassword: string) => {
+    setAdminCreds({
+      email: newEmail.trim() || DEFAULT_ADMIN_EMAIL,
+      passwordHash: newPassword.trim() || 'unique1998'
+    });
   };
 
   // Course actions
@@ -450,8 +506,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         noticeText,
         enrollments,
         isAdminLoggedIn,
+        adminEmail: adminCreds.email,
         loginAdmin,
         logoutAdmin,
+        updateAdminCredentials,
         addCourse,
         updateCourse,
         deleteCourse,

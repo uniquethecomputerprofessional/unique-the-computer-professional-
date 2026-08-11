@@ -4,7 +4,7 @@ import { INSTITUTE_CONTACT } from '../data/instituteData';
 import { useData } from '../context/DataContext';
 import { 
   Menu, X, Phone, GraduationCap, ShieldCheck, MapPin, 
-  BookOpen, Image as ImageIcon, Info, ChevronRight, Sparkles, Lock 
+  BookOpen, Image as ImageIcon, Info, ChevronRight, Sparkles 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -19,7 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActivePage,
   onOpenEnrollModal
 }) => {
-  const { noticeText, isAdminLoggedIn } = useData();
+  const { noticeText } = useData();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -38,7 +38,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'verify', label: 'Verify', icon: <ShieldCheck className="w-4 h-4" /> },
     { id: 'about', label: 'About Us', icon: <Info className="w-4 h-4" /> },
     { id: 'visit', label: 'Visit Us', icon: <MapPin className="w-4 h-4" /> },
-    { id: 'admin', label: 'Admin', icon: <Lock className="w-4 h-4 text-amber-500" /> },
   ];
 
   const handleNavClick = (pageId: PageType) => {
@@ -68,17 +67,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Phone className="w-3.5 h-3.5 text-blue-600" />
               <span>Call: {INSTITUTE_CONTACT.phone}</span>
             </a>
-            <span className="hidden md:inline text-slate-300">|</span>
-            <button
-              onClick={() => handleNavClick('admin')}
-              className="text-slate-600 hover:text-blue-600 font-bold text-xs flex items-center space-x-1"
-            >
-              <Lock className="w-3 h-3 text-amber-600" />
-              <span>Admin Portal</span>
-              {isAdminLoggedIn && (
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block ml-1"></span>
-              )}
-            </button>
           </div>
         </div>
       </div>

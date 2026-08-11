@@ -159,7 +159,7 @@ export const Footer: React.FC<FooterProps> = ({ setActivePage, onOpenEnrollModal
             <span>•</span>
             <button onClick={() => setActivePage('visit')} className="hover:text-slate-300 transition-colors">Campus Locations</button>
             <span>•</span>
-            <button onClick={() => setActivePage('admin')} className="text-amber-400 hover:text-amber-300 font-bold transition-colors">Admin Panel</button>
+            <button onClick={() => setActivePage('admin')} className="hover:text-slate-300 transition-colors">Admin Login</button>
           </div>
 
           <div className="text-center md:text-right">
