@@ -65,14 +65,14 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
   COURSES: 'utcp_courses_v1',
-  VIDEOS: 'utcp_videos_v1',
-  PHOTOS: 'utcp_photos_v1',
+  VIDEOS: 'utcp_videos_v2',
+  PHOTOS: 'utcp_photos_v2',
   TESTIMONIALS: 'utcp_testimonials_v1',
   CERTIFICATES: 'utcp_certificates_v1',
   NOTICE: 'utcp_notice_v1',
   ENROLLMENTS: 'utcp_enrollments_v1',
   ADMIN_AUTH: 'utcp_admin_auth_v1',
-  ADMIN_CREDS: 'utcp_admin_creds_v1',
+  ADMIN_CREDS: 'utcp_admin_creds_v2',
 };
 
 const DEFAULT_NOTICE = 'Admissions Open for New Batches at Rishra & Konnagar Campuses';
@@ -168,20 +168,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const DEFAULT_ADMIN_EMAIL = 'uniquethecomputerprofessional@gmail.com';
   const DEFAULT_ADMIN_PASSWORDS = [
+    'unique@1998',
+    ' unique@1998',
+    'unique1998',
     ' unique@1998@COMPUTER!',
     'unique@1998@COMPUTER!',
-    'unique1998',
     'admin123',
-    'admin@123',
-    'unique@1998'
+    'admin@123'
   ];
 
   const [adminCreds, setAdminCreds] = useState<{ email: string; passwordHash?: string }>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.ADMIN_CREDS);
-      return saved ? JSON.parse(saved) : { email: DEFAULT_ADMIN_EMAIL };
+      return saved ? JSON.parse(saved) : { email: DEFAULT_ADMIN_EMAIL, passwordHash: 'unique@1998' };
     } catch {
-      return { email: DEFAULT_ADMIN_EMAIL };
+      return { email: DEFAULT_ADMIN_EMAIL, passwordHash: 'unique@1998' };
     }
   });
 
@@ -288,7 +289,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateAdminCredentials = (newEmail: string, newPassword: string) => {
     setAdminCreds({
       email: newEmail.trim() || DEFAULT_ADMIN_EMAIL,
-      passwordHash: newPassword.trim() || 'unique1998'
+      passwordHash: newPassword.trim() || 'unique@1998'
     });
   };
 

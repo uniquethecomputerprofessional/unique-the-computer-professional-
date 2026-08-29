@@ -75,6 +75,19 @@ export interface Testimonial {
   avatar: string;
 }
 
+export interface FacultyMember {
+  id: string;
+  name: string;
+  designation: string;
+  specialization: string;
+  experience: string;
+  qualification: string;
+  campusAvailability: string;
+  bio: string;
+  keySubjects: string[];
+  avatar: string;
+}
+
 export interface InstagramPost {
   id: string;
   imageUrl: string;

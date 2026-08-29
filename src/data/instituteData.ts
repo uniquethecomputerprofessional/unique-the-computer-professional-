@@ -1,4 +1,4 @@
-import { GalleryVideo, GalleryPhoto, Testimonial, InstagramPost } from '../types';
+import { GalleryVideo, GalleryPhoto, Testimonial, InstagramPost, FacultyMember } from '../types';
 
 export const INSTITUTE_CONTACT = {
   phone: '9231660503',
@@ -57,12 +57,12 @@ export const GALLERY_VIDEOS: GalleryVideo[] = [
     title: 'Student Review & Success Story',
     type: 'review',
     categoryLabel: 'Student Testimonial',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80',
-    duration: '3:20',
-    speakerName: 'Sourav Roy & Batchmates',
-    speakerRole: 'BCA & Python Alumni',
-    description: 'Hear how individual attention, hands-on lab practicals, and 1-on-1 guidance helped students secure high marks in BCA and land tech roles.'
+    videoUrl: 'https://drive.google.com/file/d/17e6Mx-5bc_aKjuu4VN3qUDhkGpg-wK4y/preview',
+    thumbnailUrl: 'https://lh3.googleusercontent.com/d/17e6Mx-5bc_aKjuu4VN3qUDhkGpg-wK4y',
+    duration: 'Student Video',
+    speakerName: 'Student Experience & Review',
+    speakerRole: 'Unique The Computer Professional',
+    description: 'Watch genuine student video feedback and success experience learning programming, computer applications, and 1-on-1 practical lab training at Unique The Computer Professional.'
   },
   {
     id: 'classroom-visit-video',
@@ -130,7 +130,7 @@ export const GALLERY_PHOTOS: GalleryPhoto[] = [
     id: 'p1',
     title: 'Modern Workstation Practical Session',
     category: 'Practical Labs',
-    imageUrl: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1XYbLaT6KOlwRdEax2Hq8dKiDXVHosCJP',
     caption: 'Students working on real programming & web design practicals with individual dedicated PCs.',
     date: 'Jan 2025'
   },
@@ -138,7 +138,7 @@ export const GALLERY_PHOTOS: GalleryPhoto[] = [
     id: 'p2',
     title: 'Interactive Coding & Logic Discussion',
     category: 'Classrooms',
-    imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1e2w5OzD3i6NbOoeJRJne0ojZU8prXb2D',
     caption: 'Small batch class discussion clarifying C++ and Java OOP concepts.',
     date: 'Dec 2024'
   },
@@ -146,7 +146,7 @@ export const GALLERY_PHOTOS: GalleryPhoto[] = [
     id: 'p3',
     title: 'Annual Certificate Distribution Ceremony',
     category: 'Certificates',
-    imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1gAcbtW85UHuf5ddKCn4ZeptpYNv125-L',
     caption: 'Proud students receiving their official completion certificates and performance awards.',
     date: 'Nov 2024'
   },
@@ -154,7 +154,7 @@ export const GALLERY_PHOTOS: GalleryPhoto[] = [
     id: 'p4',
     title: 'Tally & GST Return Filing Workshop',
     category: 'Practical Labs',
-    imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://lh3.googleusercontent.com/d/1hEeQZHRCSicwSmPw64HXNdg3Qnhi5n-w',
     caption: 'Hands-on filing session on live tax portals and Tally Prime software.',
     date: 'Jan 2025'
   },
@@ -237,3 +237,55 @@ export const WHY_CHOOSE_US = [
     description: 'Easily accessible locations at Rishra (Rabindra Sarani) and Konnagar (Beside Railway Platform No. 1).'
   }
 ];
+
+export const FACULTY_MEMBERS: FacultyMember[] = [
+  {
+    id: 'fac-1',
+    name: 'Mr. Sunil Singh',
+    designation: 'Founder & Academic Director (Computer Science & BCA)',
+    specialization: 'Core & Advanced Programming, Algorithms, OOP & University BCA Mentorship',
+    experience: '26+ Years Experience',
+    qualification: 'M.C.A., Senior Tech Educator (Est. 1998)',
+    campusAvailability: 'Rishra & Konnagar Campuses',
+    bio: 'Founder and Academic Director of Unique The Computer Professional. Guiding computer science learners since 1998 with dedicated 1-on-1 programming mentorship, producing hundreds of university BCA toppers, software engineers, and board merit rankers.',
+    keySubjects: ['C & C++ Programming', 'Core & Advanced Java', 'Python 3 Masterclass', 'Data Structures & Algorithms', 'BCA Semester Coaching'],
+    avatar: 'https://lh3.googleusercontent.com/d/1i_eUvNy6tvHcrSNYcPfVETxlQkBr2NL5'
+  },
+  {
+    id: 'fac-2',
+    name: 'Mr. Abhay Mahato',
+    designation: 'Senior Faculty & Systems Lab Head',
+    specialization: 'Cyber Security, Ethical Hacking & Linux Network Systems',
+    experience: '14+ Years Experience',
+    qualification: 'B.Tech (AI & ML) Pursuing',
+    campusAvailability: 'Rishra & Konnagar Campuses',
+    bio: 'Specialist in penetration testing, network defense architectures, Unix/Linux administration, and threat mitigation. Mentors students through real-time packet inspection and server security audits.',
+    keySubjects: ['Ethical Hacking & Defense', 'Kali Linux Administration', 'Network Penetration Testing', 'Wireshark & Nmap Auditing', 'OWASP Web Security'],
+    avatar: 'https://lh3.googleusercontent.com/d/1d6Wdf_fcftjMwX876B6kVOvmhGt6XEFO'
+  },
+  {
+    id: 'fac-3',
+    name: 'Mrs. Ananya Sen',
+    designation: 'Senior Faculty - Accounting & Business Systems',
+    specialization: 'Tally Prime with GST, TDS Compliance & Financial Analytics',
+    experience: '12+ Years Experience',
+    qualification: 'M.Com (Finance), Certified Tally Professional',
+    campusAvailability: 'Rishra & Konnagar Campuses',
+    bio: 'Industry-experienced educator empowering commerce students and professionals with computerized accounting, GST returns, e-way billing, and advanced corporate spreadsheet modeling.',
+    keySubjects: ['Tally Prime with GST', 'Advance Excel with VLOOKUP & Macros', 'TDS & E-Filing Compliance', 'Business Payroll Accounting', 'Financial Ledger Auditing'],
+    avatar: 'https://lh3.googleusercontent.com/d/1TvGd1exPunOUero7IVQrAyKHY2gZt2_P'
+  },
+  {
+    id: 'fac-4',
+    name: 'Mr. Debjit Bhattacharya',
+    designation: 'Faculty Mentor - School Boards & Web Technologies',
+    specialization: 'School Computer Applications (ICSE/CBSE/ISC/WB) & Frontend Web',
+    experience: '10+ Years Experience',
+    qualification: 'BCA, M.Sc. (Computer Science)',
+    campusAvailability: 'Rishra & Konnagar Campuses',
+    bio: 'Dedicated mentor for Class IX–XII school board students and aspiring web developers. Specializes in building deep conceptual logic in Boolean algebra, arrays, DBMS, and responsive web design.',
+    keySubjects: ['Class 11 & 12 Computer Applications', 'ICSE / CBSE / ISC Board Curriculum', 'Web Design (HTML5 / CSS3 / JS)', 'DBMS & SQL Relational Queries', 'Foundation Logic & OOP'],
+    avatar: 'https://lh3.googleusercontent.com/d/1kdg6vU2a3nVoc0sMjOeqioubK50d9_H3'
+  }
+];
+
